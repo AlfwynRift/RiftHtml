@@ -6,7 +6,7 @@ Prerequisites: You will need a webserver on linux to run cgis and a basic unders
 Building steps:
 * Look over "common.h" and adjust filenames as needed. Absolute directory names will work best, escpecially if you don't run the cgis from the cgi-bin in this directory. The cgis will access DATA_DIR and CONF_DIR at runtime.
 * Type "make" in this directory to build the cgis. Make sure you have libsqlite3 installed.
-* Copy lang_english.cds and a decrypted telara.db3 to data/current. You can use riftools for this step (https://github.com/imathrowback/riftools).
+* Copy lang_english.cds and a decrypted telara.db as telara.db3 to data/current. You can use riftools for this step (https://github.com/imathrowback/riftools).
 * Copy the discovery xml files to the data directory. You can download them from trion at http://webcdn.triongames.com/addons/assets/Rift_Discoveries_2018-10-16.zip
 * Change into the data directory and type "make" to build indices for the xml files.
 * To customize the html output you can edit conf/html_header. Escape any % you add as %% as the file is used as format string for printf.
