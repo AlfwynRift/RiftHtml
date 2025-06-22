@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>%s</title>
+<style>
+  table, th, td { border: 1px solid black; }
+  div#nav { position:absolute; top:0; right:0; width: 15%%; margin-top:25px; margin-right: 25px; }
+  input { width: 50px; }
+  form { float: left; margin-eft: 10px; }
+  @media screen{ body>div#nav { position:fixed; }}
+  div#content { width:83%%; margin-right: 10px; }
+  pre { white-space: pre-wrap;  }
+</style>
+</head>
+
+<body>
+
+<div id="nav">
+<form action="telaradb.cgi">
+  id <input type="text" name="id" value="%s">
+  key <input type="text" name="key" value="%s">
+  <input type="submit" value="Go">
+  <p>A key of "all" will display a list of all keys with given id.
+</form><p>
+<form action="telaradb.cgi">
+  class <input type="text" name="class">
+  <input type="submit" value="Go">
+</form>
+</div>
+
+<div id="content">
