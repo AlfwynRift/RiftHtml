@@ -1,6 +1,6 @@
 RiftHtml consists of two cgis to display rift data as interlinked html
 
-Prerequisites: You will need a webserver to run cgis and a basic understanding of rift internals
+Prerequisites: You will need a webserver on linux to run cgis and a basic understanding of rift internals
 
 
 Building steps:
