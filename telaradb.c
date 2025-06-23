@@ -228,7 +228,7 @@ static void print(obj *o, int index, int indent, int pindex)
         b = o2->members[2].data.f;
 
         sprintf(val, "<span style=\"background-color:#%02x%02x%02x;\">&nbsp;&nbsp;&nbsp;&nbsp;</span> %g / %g / %g", (int)(255*r), (int)(255*g), (int)(255*b), r, g, b);
-	if (o2->members[3].type)
+	if (o2->nmemb>3)
 	{ char *val2 = strdup(val);
           float a = o2->members[3].data.f;
 	  sprintf(val, "%s alpha %g", val2, a);
