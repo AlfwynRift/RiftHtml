@@ -90,11 +90,11 @@ int main(int argc, char **argv)
   
   char tagline[32];
   sprintf(tagline, "  <%s>\n", cat);
-  while (fgets(line, 256, infile))
+  while (fgets(line, 255, infile))
   { if (!strcmp(line, tagline))
       data[++i].off = ftell(infile);
     else if (!data[i].str && (!strcmp(line, "    <Name>\n") || !strcmp(line, "    <PrimaryName>\n")))
-    { fgets(line, 256, infile);
+    { fgets(line, 255, infile);
       sscanf(line, " <English>%[^<]", name);
       data[i].str = strdup(name);
     }
