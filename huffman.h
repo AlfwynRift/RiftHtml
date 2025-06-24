@@ -1,15 +1,3 @@
-#include <stdint.h>
-
-typedef unsigned char byte;
-
-typedef uint16_t uint16;
-typedef uint32_t uint32;
-
-typedef int16_t int16;
-typedef int32_t int32;
-
-typedef unsigned char uint8;
-typedef signed char int8;
 
 typedef struct node node;
 struct node

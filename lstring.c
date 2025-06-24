@@ -5,6 +5,7 @@
 #include "common.h"
 #include "database.h"
 #include "lstring.h"
+#include "huffman.h"
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>

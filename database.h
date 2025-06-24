@@ -1,4 +1,3 @@
-#include "huffman.h"
 
 typedef struct obj obj;
 

@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <sqlite3.h>
 #include "common.h"
+#include "huffman.h"
 #include "database.h"
 #include "config.h"
 #include "lstring.h"
