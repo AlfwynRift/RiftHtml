@@ -349,13 +349,13 @@ int main(int argc, char **argv)
     }
     fclose(ci);
     if (!id)
-    { printf("No such class\n");
+    { printf("No such (toplevel) class\n");
       return 0;
     }
   }
 
   conf *c = getconf(id, -1);
-  if (c)
+  if (c && c->name)
     printf("<b>%s</b>  ", c->name);
   if (all)
   { printf("\nid: %d<br>\n", id);
