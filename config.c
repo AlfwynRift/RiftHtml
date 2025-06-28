@@ -32,7 +32,8 @@ static void initconf(void)
     char *key;
     if (key = strtok(line, " \t\n"))
     { cline *c = config+nr;
-      sscanf(key, "%d.%d", &c->class_id, &c->index);
+      if (sscanf(key, "%d.%d", &c->class_id, &c->index) == 1)
+	c->index = -1;
       char *name = strtok(NULL, " \t\n");
       c->config.name = strdup(name);
 

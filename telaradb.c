@@ -239,7 +239,6 @@ fprintf(stderr, "class: %d, id: %d\n", subclassid, talent);
         { static char val[32];
 	  sprintf(val, "classid %d", m->data.o->class_id);
           output(o, index, indent, val, -(pindex<0));
-          //output(o, index, indent, val, -1);
 	  o = m->data.o;
         }
       }
@@ -355,8 +354,11 @@ int main(int argc, char **argv)
     }
   }
 
+  conf *c = getconf(id, -1);
+  if (c)
+    printf("<b>%s</b>  ", c->name);
   if (all)
-  { printf("id: %d<br>\n", id);
+  { printf("\nid: %d<br>\n", id);
       read_all(id, &cb);
   }
   else if (id)
