@@ -94,14 +94,13 @@ static void print(obj *o, int index, int indent, int pindex)
       { m->code = 19;
 	int subclassid = o->members[0].data.si;
 	int talent = m->data.si;
-fprintf(stderr, "class: %d, id: %d\n", subclassid, talent);
         for (int i=1; i<8; i++)
 	{ obj *o2=read_obj(1827, i);
           if (o2)
 	  { obj *map = o2->members[0].data.o;
-            for (int j=0; j<map->nmemb; j++)
-	    { if (map->members[2*j].data.si == subclassid)
-              { obj *array = map->members[2*j+1].data.o->members[0].data.o;
+            for (int j=0; j<map->nmemb; j+=2)
+	    { if (map->members[j].data.si == subclassid)
+              { obj *array = map->members[j+1].data.o->members[0].data.o;
 		for (int k=0; k<array->nmemb; k++)
 		{ obj *o1830 = array->members[k].data.o;
 		  if (o1830->members[1].data.si == talent) // default 0 pans out just right
