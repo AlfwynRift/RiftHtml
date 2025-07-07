@@ -3,6 +3,7 @@
 #include <strings.h>
 #include <malloc.h>
 #include <unistd.h>
+#include "common.h"
 #include "huffman.h"
 
 static int heapl = 512;
