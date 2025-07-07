@@ -10,6 +10,7 @@
 #include "lstring.h"
 #include "discname.h"
 #include "html.h"
+#include "tpath.h"
 
 static char *codenames[] = { "false", "true", "ulong", "slong", "4bytes", "8bytes", "string", "classend", "?", "class", "array", "map", "?", "?", "?", "?", "lstring", "istring", "listring", "link", "float", "int", "item", "quest", "NPC", "recipe", "wintime" , "color", "double" };
 
@@ -74,14 +75,15 @@ static void print(obj *o, int index, int indent, int pindex)
   else
     s = T_COMP;
 
+  conf *c;
+  if (pindex >= 0)
+    c = getconf(o->class_id, pindex);
+  else
+    c = getconf(o->class_id, index);
+
   switch(s)
   { case T_NUM:
-    { conf *c;
-      char val[128];
-      if (pindex >= 0)
-        c = getconf(o->class_id, pindex);
-      else
-        c = getconf(o->class_id, index);
+    { char val[128];
       if (c && c->istring)
       { m->code = 17;
         sprintf(val, "<a href=%s>%s</a>", linkid(c->istring, m->data.si), getname(c->istring, m->data.si));
@@ -89,29 +91,6 @@ static void print(obj *o, int index, int indent, int pindex)
       else if (c && c->listring)
       { m->code = 18;
         sprintf(val, "<a href=%s>%s</a>", linkid(c->listring, m->data.si), getname(c->listring, m->data.si));
-      }
-      else if (o->class_id==1852 && index==1)
-      { m->code = 19;
-	int subclassid = o->members[0].data.si;
-	int talent = m->data.si;
-        for (int i=1; i<8; i++)
-	{ obj *o2=read_obj(1827, i);
-          if (o2)
-	  { obj *map = o2->members[0].data.o;
-            for (int j=0; j<map->nmemb; j+=2)
-	    { if (map->members[j].data.si == subclassid)
-              { obj *array = map->members[j+1].data.o->members[0].data.o;
-		for (int k=0; k<array->nmemb; k++)
-		{ obj *o1830 = array->members[k].data.o;
-		  if (o1830->members[1].data.si == talent) // default 0 pans out just right
-		  { char *tname = lstring(o1830->members[2].data.o);
-		    sprintf(val, "<a href=\"telaradb.cgi?id=1827&key=%d#t%d_%d\">%s</a>", i, subclassid, talent,tname);
-		  }
-		}
-	      }
-	    } 
-	  }
-	}
       }
       else if (c && c->link)
       { m->code = 19;
@@ -167,15 +146,15 @@ static void print(obj *o, int index, int indent, int pindex)
 	  time_t time = m->data.ui/10000000-11644473600;
 	  sprintf(val, "%s", ctime(&time));
         }
-#if 0
-	else if (c && c->name && !strcmp(c->name, "Quest"))
-        { char *q = getquest(m->data.si);
-	  if (q)
-            sprintf(val, "(q%08X) %s", m->data.si, q);
-	  else
-	    sprintf(val, "<span style=\"color:#FF0000;\">(q%08X)</span>", m->data.si);
-        }
-#endif
+	else if (c && c->type && !strcmp(c->type, "talent"))
+        { m->code = 19;
+          int classid = o->members[index-1].data.si;
+          int talent = m->data.si;
+
+	  tps_member *tm = tpath_obj("#1827:/.0/{%d}/.0/@1830[.1=%d]/.2", classid, talent);
+	  char *tname = lstring(tm->m.data.o);
+	  sprintf(val, "<a href=\"telaradb.cgi?id=1827&key=%d#t%d_%d\">%s</a>", tm->key, classid, talent, tname);
+	}
         else
         { if (m->code < 2)	// boolean
 	    sprintf(val, "%d", m->data.ui);
@@ -191,7 +170,18 @@ static void print(obj *o, int index, int indent, int pindex)
     }
 
     case T_STRING: 
-	output(o, index, indent, m->data.s, pindex);
+	if (c && c->type && !strcmp(c->type, "idstring"))
+        { char val[1024], link[128];
+          char *part=strtok(m->data.s, "#");
+	  strcpy(val, part);
+	  while (part=strtok(NULL, "#"))
+	  { sprintf(link, "#<A href=%s>%s</A>", linkid(c->link, atoi(part)), part);
+	    strcat(val, link);
+	  }
+	  output(o, index, indent, val, pindex);
+	}
+	else
+	  output(o, index, indent, m->data.s, pindex);
 	break;
 
     case T_COMP:
@@ -257,13 +247,16 @@ static void print(obj *o, int index, int indent, int pindex)
         g = o2->members[1].data.f;
         b = o2->members[2].data.f;
 
-        sprintf(val, "<span style=\"background-color:#%02x%02x%02x;\">&nbsp;&nbsp;&nbsp;&nbsp;</span> %g / %g / %g", (int)(255*r), (int)(255*g), (int)(255*b), r, g, b);
+	if (r>1 || g>1 || b>1)
+	  sprintf(val, " %g / %g / %g", r, g, b);
+	else
+          sprintf(val, "<span style=\"background-color:#%02x%02x%02x;\">&nbsp;&nbsp;&nbsp;&nbsp;</span> %g / %g / %g", (int)(255*r), (int)(255*g), (int)(255*b), r, g, b);
 	if (o2->nmemb>3)
 	{ char *val2 = strdup(val);
           float a = o2->members[3].data.f;
 	  sprintf(val, "%s alpha %g", val2, a);
 	}
-	output(o, index, indent, val, 0);
+	output(o, index, indent, val, -1);
       }
       else
       { output(o, index, indent, "", -1);
@@ -283,6 +276,36 @@ static void print(obj *o, int index, int indent, int pindex)
       break;
     }
   } 
+}
+
+static void tpath_query(char *path)
+{ char *remoteip = getenv("REMOTE_ADDR");
+  if (!remoteip || strcmp(remoteip, SECURE_IP))
+  { printf("Connection from unsecure IP - see common.h\n");
+    return;
+  }
+  
+  tset *set = tpath_set(path);
+  if (tpath_errno)
+  { printf("Tpath error %d: %s\n", tpath_errno, tpath_errmsg);
+    return;
+  }
+  if (!set->nmemb)
+  { printf("Tpath: no match found\n");
+    return;
+  }
+  printf("Tpath (%s) result:\n", path);
+  for (int i=0; i<set->nmemb; i++)
+  { obj *o = tpath_tm2obj(set->members+i);
+
+    printf("<table>\n");
+    printf("<tr><th colspan=9>Index</th><th>Name</th><th>Type</th><th>Value</th></tr>\n");
+
+    print(o, 0, -1, -1);
+
+    printf("</table>\n");
+  }
+  printf("</div></body></html>\n");
 }
 
 static int id;
@@ -305,6 +328,7 @@ int main(int argc, char **argv)
 
   int key=0, all=0, class=0;
   char *skey="", *sid="";
+  char *tpath = NULL;
   char *arg=strtok(query, "&");
   do
   { if (!strncmp(arg, "id=", 3))
@@ -315,15 +339,22 @@ int main(int argc, char **argv)
       class = atoi(arg+6);
     else if (!strncmp(arg, "rel=", 4))
       release = RELEASE2;
+    else if (!strncmp(arg, "tpath=", 6))
+      tpath = url_decode(arg+6);
   } while (arg=strtok(NULL, "&"));
 
-  html_header("telaradb", sid, skey);
+  html_header("telaradb", sid, skey, tpath?tpath:"");
 
   id = atoi(sid);
   if (!strcmp(skey, "all"))
     all = 1;
   else
     key = atoi(skey);
+
+  if (tpath)
+  { tpath_query(tpath);
+    return 0;
+  }
 
   if (class)
   { int c;

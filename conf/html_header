@@ -5,7 +5,7 @@
   table, th, td { border: 1px solid black; }
   div#nav { position:absolute; top:0; right:0; width: 15%%; margin-top:25px; margin-right: 25px; }
   input { width: 50px; }
-  form { float: left; margin-eft: 10px; }
+  form { float: left; margin-eft: 10px; padding-bottom: 20px; }
   @media screen{ body>div#nav { position:fixed; }}
   div#content { width:83%%; margin-right: 10px; }
   pre { white-space: pre-wrap;  }
@@ -20,11 +20,19 @@
   key <input type="text" name="key" value="%s">
   <input type="submit" value="Go">
   <p>A key of "all" will display a list of all keys with given id.
-</form><p>
+</form>
+
 <form action="telaradb.cgi">
   class <input type="text" name="class">
   <input type="submit" value="Go">
 </form>
+
+<form action="telaradb.cgi">
+  tpath <input type="text" name="tpath" style="width:180px;" value="%s">
+  <input type="submit" value="Go">
+</form>
+
 </div>
+
 
 <div id="content">

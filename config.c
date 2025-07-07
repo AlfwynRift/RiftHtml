@@ -47,6 +47,10 @@ static void initconf(void)
           c->config.istring = atoi(val); 
         else if (!strcmp("listring", o))
 	  c->config.listring = atoi(val);
+	else if (!strcmp("idstring", o))
+	{ c->config.type = "idstring";
+	  c->config.link = atoi(val);
+	}
         else if (!strcmp("link", o))
         { c->config.link = atoi(val);
 	  c->config.linkt = 0;

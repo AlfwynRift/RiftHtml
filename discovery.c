@@ -131,7 +131,7 @@ int main(int argc, char **argv)
 
   query = getenv("QUERY_STRING");
 
-  html_header("Discoveries", "", "");
+  html_header("Discoveries", "", "", "");
 
   static char *cats[] = { "Achievement", "ArtifactCollection", "Item", "ItemKey", "NPC", "Quest", "Recipe", NULL };
   char *id=NULL;

@@ -7,6 +7,21 @@
 
 extern char *release;
 
+/*
+  Optionally define a secure IP adress, that is allowed to make tpath queries
+  See: https://thegharstation.com/gharwiki/index.php/User:Alfwyn/Sandbox#Tpath
+  Currently only a limited subset is implemented, but more is planned.
+  This feature mainly exists for me to debug tpath expressions and the tpath
+  implementation.
+
+  No attempt is made to sanitize the tpath string, and malicious
+  expressions could be a real resource hog.
+
+  127.0.0.1 may be a good choice for the definition.
+*/
+#define SECURE_IP       "x"
+
+
 #include <stdint.h>
 typedef unsigned char byte;
 
