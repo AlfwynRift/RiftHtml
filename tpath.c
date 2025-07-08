@@ -189,9 +189,9 @@ static tset *tpath_wrapper(char *path)
 tset *tpath_set(const char *path, ...)
 { va_list args;
   va_start(args, path);
-
   vsnprintf(buf, 1023, path, args);
   va_end(args);
+
   return tpath_wrapper(buf);
 }
 

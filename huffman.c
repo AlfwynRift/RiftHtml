@@ -10,70 +10,31 @@ static int heapl = 512;
 
 static node *maketable(int *values)
 {
-            int nextDepth;
-            int result;
-            int maxDepth = 9;
-            int v9;
-            int v10;
-            int v12[32];	bzero(v12, 32*sizeof(int));
-            int a3[512];	bzero(a3, 512*sizeof(int));
-            int codeValues[512];bzero(codeValues, 512*sizeof(int));
-            int codeLength[512];bzero(codeLength, 512*sizeof(int));
-            int depth = 0;
-            int v6 = 0;
+  int result;
+  int v12[32];		bzero(v12, 32*sizeof(int));
+  int codeValues[512];	bzero(codeValues, 512*sizeof(int));
+  int codeLength[512];	bzero(codeLength, 512*sizeof(int));
+  int depth = 0;
+  int v6 = 0;
 
-            v12[0] = 1;
-            do
-            {
-                result = values[(v6 & 1) * 256 + v12[depth]];
-                if (result < 0)
-                {
-                    nextDepth = depth + 1;
-                    do
-                    {
-                        if (nextDepth == maxDepth)
-                            a3[v6] = result;
-                        v6 *= 2;
-                        ++depth;
-                        v12[depth] = -result;
-                        result = values[-result];
-                        ++nextDepth;
-                    } while (result < 0);
-                }
-                codeValues[result] = v6;
-                codeLength[result] = depth + 1;
-                if (depth + 1 <= maxDepth)
-                {
-                    if (depth + 1 == maxDepth)
-                    {
-                        a3[v6] = result;
-                    }
-                    else
-                    {
-                        v9 = maxDepth - (depth + 1);
-                        v10 = 1 << v9;
-                        if (1 << v9 != 0)
-                        {
-                            int v11 = v10 + (v6 << v9);
-                            do
-                            {
-                                --v10;
-                                --v11;
-                                v11 = result;
-                                a3[v11] = result;
-                            } while (v10 != 0);
-                        }
-                    }
-                }
-                do
-                {
-                    if ((v6 & 1) == 0)
-                        break;
-                    v6 >>= 1;
-                    --depth;
-                } while (depth >= 0);
-                v6 |= 1;
-            } while (depth >= 0);
+  v12[0] = 1;
+  do
+  { result = values[(v6 & 1) * 256 + v12[depth]];
+    while (result < 0)
+    { v6 <<= 1;
+      depth++;
+      v12[depth] = -result;
+      result = values[-result];
+    }
+    codeValues[result] = v6;
+    codeLength[result] = depth + 1;
+
+    while ((v6&1) && depth >= 0)
+    { v6 >>= 1;
+      depth--;
+    }
+    v6 |= 1;
+   } while (depth >= 0);
 
             node *root = (node *)calloc(1, sizeof(node));
 
@@ -139,7 +100,7 @@ static void heapify(int *heap, int insert, int weight, int value, int limit)
 node *buildTree(uint32 *frequencies)
 {
             // The heap is twice the size of the array as we will first store pairs inside
-            int *heap = (int *)calloc(heapl,sizeof(int));
+            int *heap = (int *)calloc(heapl, sizeof(int));
             for (int i = 0; i < 256; ++i)
             {
                 heap[i] = i;

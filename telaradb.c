@@ -155,6 +155,15 @@ static void print(obj *o, int index, int indent, int pindex)
 	  char *tname = lstring(tm->m.data.o);
 	  sprintf(val, "<a href=\"telaradb.cgi?id=1827&key=%d#t%d_%d\">%s</a>", tm->key, classid, talent, tname);
 	}
+        else if (c && c->type && !strcmp(c->type, "talent2"))
+        { m->code = 19;
+          int talent = m->data.si;
+          int classid = o->members[index+1].data.si;
+
+          tps_member *tm = tpath_obj("#1827:/.0/{%d}/.0/@1830[.1=%d]/.2", classid, talent);
+          char *tname = lstring(tm->m.data.o);
+          sprintf(val, "<a href=\"telaradb.cgi?id=1827&key=%d#t%d_%d\">%s</a>", tm->key, classid, talent, tname);
+        }
         else
         { if (m->code < 2)	// boolean
 	    sprintf(val, "%d", m->data.ui);

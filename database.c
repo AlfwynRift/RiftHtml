@@ -106,7 +106,11 @@ static sqlite3 *db = NULL;
 
 static void open_db(void)
 { char filename[128];
-  sprintf(filename, "%s%s/telara.db3", DATA_DIR,  release);
+
+  if (db)
+    return;
+
+  snprintf(filename, 127, "%s%s/telara.db3", DATA_DIR,  release);
 
   if (sqlite3_open(filename, &db))
   { printf("SQL error: %s\n", sqlite3_errmsg(db));
@@ -172,11 +176,12 @@ static byte *decode(byte *d, obj *o, entry e)
       { o->members[e.data].type = T_COMP;
         o->members[e.data].data.o = o2;
       }
+      else
+	o_ret = o2;
       while ((e2 = split(leb128(&d))).code != 7)
       { o2->members[e2.data].code = e2.code;
 	d = decode(d, o2, e2);
-      };
-      o_ret = o2;
+      }
       break;
     }
 
@@ -219,15 +224,48 @@ static byte *decode(byte *d, obj *o, entry e)
   return d;
 }
 
+typedef struct ocline
+{ int id;
+  int key;
+  obj *o;
+} ocline;
+
+static ocline *ocache = NULL;
+static int oclen = 0;
+
+static obj *obj_cache(int id, int key)
+{ for (int i=0; i<oclen; i++)
+  { if (id==ocache[i].id && key==ocache[i].key)
+      return ocache[i].o;
+  }
+  return NULL;
+}
+
+static void obj_add2cache(int id, int key, obj *o)
+{ static int maxlen = 0;
+
+  if (oclen == maxlen)
+  { maxlen += 32;
+    ocache = realloc(ocache, maxlen*sizeof(ocline));
+  }
+  ocache[oclen].id = id;
+  ocache[oclen].key = key;
+  ocache[oclen].o = o;
+  oclen++;
+}
+
 obj *read_obj(int id, int key)
 { char sql[256];
   static int lastid = 0;
 
-  if (!db)
-    open_db();
+  open_db();
+
+  obj *c = obj_cache(id, key);
+  if (c)
+    return c;
 
   if (id != lastid)
-  { sprintf(sql, "SELECT frequencies FROM dataset_compression WHERE datasetId=%d", id);
+  { snprintf(sql, 255, "SELECT frequencies FROM dataset_compression WHERE datasetId=%d", id);
     if (sqlite3_exec(db, sql, ftable, NULL, NULL))
     { printf("SQL error: %s\n", sqlite3_errmsg(db));
       exit(0);
@@ -237,11 +275,12 @@ obj *read_obj(int id, int key)
   lastid = id;
 
   o_ret = NULL;
-  sprintf(sql, "SELECT alternateKey1, alternateKey2, name, value FROM dataset WHERE datasetId=%d AND datasetKey=%d", id, key);
+  snprintf(sql, 255, "SELECT alternateKey1, alternateKey2, name, value FROM dataset WHERE datasetId=%d AND datasetKey=%d", id, key);
   if (sqlite3_exec(db, sql, dataset, NULL, NULL))
   { printf("SQL error: %s\n", sqlite3_errmsg(db));
     exit(0);
   }
+  obj_add2cache(id, key, o_ret);
   return o_ret;
 }
 
@@ -265,6 +304,7 @@ char *getname(int id, int key)
   }
   else
     noname = 0;
+
   if (o->members[i].type == T_NONE)
   { i=getindex(o->class_id, "iName");
     if (i<0)
@@ -282,9 +322,8 @@ void read_all(int id, void (*callback)(int))
 { char sql[256];
 
   cb = callback;
-  if (!db)
-    open_db();
-  sprintf(sql, "SELECT datasetKey FROM dataset WHERE datasetId=%d", id);
+  open_db();
+  snprintf(sql, 255, "SELECT datasetKey FROM dataset WHERE datasetId=%d", id);
   if (sqlite3_exec(db, sql, datakey, NULL, NULL))
   { printf("SQL error: %s\n", sqlite3_errmsg(db));
     exit(0);
@@ -313,11 +352,10 @@ dbkey getkey(char *idlist, int ktype, int key)
       break;
   }
 
-  if (!db)
-    open_db();
+  open_db();
 
   ret_keyval.id = 0;
-  sprintf(sql, "SELECT datasetId, datasetKey FROM dataset WHERE datasetId IN (%s) AND %s=%d", idlist, kn, key);
+  snprintf(sql, 255, "SELECT datasetId, datasetKey FROM dataset WHERE datasetId IN (%s) AND %s=%d", idlist, kn, key);
   if (sqlite3_exec(db, sql, keyval, NULL, NULL))
   { printf("SQL error: %s\n", sqlite3_errmsg(db));
     exit(0);
