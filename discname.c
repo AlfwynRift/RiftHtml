@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <stdint.h>
 #include <unistd.h>
+#include "common.h"
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -18,8 +19,6 @@ typedef uint64_t uint64;
 typedef int16_t int16;
 typedef int32_t int32;
 typedef int64_t int64;
-
-static char *dir = "/home/walter/rift/Discoveries";
 
 static int keysize;
 
@@ -54,7 +53,7 @@ char *discname(const char *Cat, long id, long id_hi)
   char *ret;
 
   char inname[128];
-  sprintf(inname, "%s/%ss.index", dir, Cat); 
+  snprintf(inname, 127, "%s%ss.index", DISCOVERY_DIR, Cat); 
   int infile = open(inname, O_RDONLY);
   FILE *inf = fdopen(infile, "r");
   fseek(inf, 0, SEEK_END);

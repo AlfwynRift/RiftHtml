@@ -93,7 +93,6 @@ static void print(FILE *xml, char *class, int nesting)
         sprintf(val, "<a href=\"discovery.cgi?cat=ItemKey&id=%s\">%s</a>", val2, name);
       else
         sprintf(val, "<span style=\"color:#FF0000;\">%s</span>", val2);
-        //sprintf(val, "<span style=\"color:#FF0000;\">%016lx %016lx</span>", i1, i2);
     } else
     { dconf *c=getdconf(class, tag);
       if (c && c->cat)
@@ -157,7 +156,7 @@ int main(int argc, char **argv)
   printf("file: %ss.xml id: %s\n", scat, id);
 
   char inname[128];
-  sprintf(inname, "%s%ss.index", DISCOVERY_DIR, cat);
+  snprintf(inname, 127, "%s%ss.index", DISCOVERY_DIR, cat);
   int infile = open(inname, O_RDONLY);
   FILE *inf = fdopen(infile, "r");
   fseek(inf, 0, SEEK_END);
@@ -207,7 +206,7 @@ int main(int argc, char **argv)
   if (dbid)
     printf("<a href=\"telaradb.cgi?id=%d&key=%d\">telara.db</a>", dbid, atoi(id));
 
-  sprintf(inname, "%s%ss.xml", DISCOVERY_DIR, cat);
+  snprintf(inname, 127, "%s%ss.xml", DISCOVERY_DIR, cat);
   FILE *xml = fopen(inname, "r");
   fseek(xml, off, SEEK_SET);
  
