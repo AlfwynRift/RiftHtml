@@ -29,6 +29,7 @@ struct obj
   member members[];
 };
 
+void disable_obj_chache(void);
 obj *decode_obj(byte *data, int dlen);
 obj *read_obj(int id, int key);
 char *getname(int id, int key);

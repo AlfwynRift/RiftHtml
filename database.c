@@ -232,6 +232,11 @@ typedef struct ocline
 
 static ocline *ocache = NULL;
 static int oclen = 0;
+static int nocache = 0;
+
+void disable_obj_chache(void)
+{ nocache = 1;
+}
 
 static obj *obj_cache(int id, int key)
 { for (int i=0; i<oclen; i++)
@@ -243,6 +248,9 @@ static obj *obj_cache(int id, int key)
 
 static void obj_add2cache(int id, int key, obj *o)
 { static int maxlen = 0;
+
+  if (nocache)
+    return;
 
   if (oclen == maxlen)
   { maxlen += 32;

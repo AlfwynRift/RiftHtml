@@ -24,8 +24,6 @@ typedef int16_t int16;
 typedef int32_t int32;
 typedef int64_t int64;
 
-static char *dir = "/home/walter/rift/Discoveries";
-
 static int keysize;
 
 static int cmp(const void *a, const void *b)
@@ -159,7 +157,7 @@ int main(int argc, char **argv)
   printf("file: %ss.xml id: %s\n", scat, id);
 
   char inname[128];
-  sprintf(inname, "%s/%ss.index", dir, cat);
+  sprintf(inname, "%s%ss.index", DISCOVERY_DIR, cat);
   int infile = open(inname, O_RDONLY);
   FILE *inf = fdopen(infile, "r");
   fseek(inf, 0, SEEK_END);
@@ -209,17 +207,10 @@ int main(int argc, char **argv)
   if (dbid)
     printf("<a href=\"telaradb.cgi?id=%d&key=%d\">telara.db</a>", dbid, atoi(id));
 
-  sprintf(inname, "%s/%ss.xml", dir, cat);
+  sprintf(inname, "%s%ss.xml", DISCOVERY_DIR, cat);
   FILE *xml = fopen(inname, "r");
   fseek(xml, off, SEEK_SET);
  
-#if 0
-  char line[256];
-  for (int i=0; i<15; i++)
-  { fgets(line, 256, xml);
-     printf("%s", line);
-  }
-#else
   printf("<table>\n");
   printf("<tr><th colspan=4>Nesting</th><th>Name</th><th>Value</th></tr>\n");
 
@@ -227,7 +218,6 @@ int main(int argc, char **argv)
  
   printf("</table>\n");
   printf("</body></html>\n"); 
-#endif
 
   return 0;
 }

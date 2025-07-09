@@ -18,7 +18,8 @@ static node *maketable(int *values)
   int v6 = 0;
 
   v12[0] = 1;
-  do
+
+  while (depth >= 0)
   { result = values[(v6 & 1) * 256 + v12[depth]];
     while (result < 0)
     { v6 <<= 1;
@@ -34,7 +35,7 @@ static node *maketable(int *values)
       depth--;
     }
     v6 |= 1;
-   } while (depth >= 0);
+   }
 
             node *root = (node *)calloc(1, sizeof(node));
 

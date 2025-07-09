@@ -398,7 +398,8 @@ int main(int argc, char **argv)
     printf("<b>%s</b>  ", c->name);
   if (all)
   { printf("\nid: %d<br>\n", id);
-      read_all(id, &cb);
+    disable_obj_chache();
+    read_all(id, &cb);
   }
   else if (id)
   { printf("id: %d, key: %d ", id, key);
