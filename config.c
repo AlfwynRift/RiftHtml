@@ -10,7 +10,6 @@ typedef struct cline
   conf config;
 } cline;
 
-
 static cline *config=NULL;
 static int size;
  
@@ -72,6 +71,7 @@ static void initconf(void)
     }
   }
   size = nr;
+  fclose(cfile);
 }
 
 conf *getconf(int id, int index)

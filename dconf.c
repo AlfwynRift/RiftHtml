@@ -55,6 +55,7 @@ static void initconf(void)
     }
   }
   size = nr;
+  fclose(cfile);
 }
 
 dconf *getdconf(char *class, char *tag)

@@ -12,7 +12,7 @@
 #include "html.h"
 #include "tpath.h"
 
-static char *codenames[] = { "false", "true", "ulong", "slong", "4bytes", "8bytes", "string", "classend", "?", "class", "array", "map", "?", "?", "?", "?", "lstring", "istring", "listring", "link", "float", "int", "item", "quest", "NPC", "recipe", "wintime" , "color", "double" };
+static char *codenames[] = { "false", "true", "ulong", "slong", "4bytes", "8bytes", "string", "classend", "?", "class", "array", "map", "?", "?", "?", "?", "lstring", "istring", "listring", "link", "float", "int", "item", "quest", "NPC", "recipe", "wintime" , "color", "double", "nlstring" };
 
 static void output(obj *o, int index, int indent, char *val, int pindex)
 { static int subclass;
@@ -73,7 +73,7 @@ static void print(obj *o, int index, int indent, int pindex)
     s = m->type;
   }
   else
-    s = T_COMP;
+    s = T_CLASS;
 
   conf *c;
   if (pindex >= 0)
@@ -124,6 +124,10 @@ static void print(obj *o, int index, int indent, int pindex)
 	else if (c && c->type && !strcmp(c->type, "int"))
 	{ m->code = 21;
 	  sprintf(val, "%ld", m->data.si);
+	}
+	else if (c && c->type && !strcmp(c->type, "nlstring"))
+	{ m->code = 29;
+	  sprintf(val, "%s", nlstring(m->data.si));
 	}
 	else if (c && c->type && !strcmp(c->type, "item"))
 	{ m->code = 22;
@@ -193,7 +197,7 @@ static void print(obj *o, int index, int indent, int pindex)
 	  output(o, index, indent, m->data.s, pindex);
 	break;
 
-    case T_COMP:
+    case T_CLASS:
       if (indent >= 0)
       { int id = m->data.o->class_id;
         if (id == 7703)
@@ -422,14 +426,24 @@ int main(int argc, char **argv)
     }
  
     printf("classid %d\n", o->class_id);
-    char *cat=NULL;
+    char *cat=NULL, *mcat=NULL;
     switch(id)
-    { case 2200:
-        cat="Achievement";
+    { case 113:
+	mcat = "zone";
+	break;
+
+      case 2200:
+        cat = "Achievement";
+	mcat = "achievement";
         break;
 
+      case 4201:
+	mcat = "faction";
+	break;
+
       case 10701:
-        cat="ArtifactCollection";
+        cat = "ArtifactCollection";
+	mcat = "artifactset";
         break;
     }
     if (cat)
@@ -438,6 +452,13 @@ int main(int argc, char **argv)
       else
         printf("<a style=\"color:#FF0000;\" href=\"discovery.cgi?cat=%s&id=%d\">%ss.xml</a>\n", cat, key, cat);
     }
+
+    if (id == 7629)
+      printf(" <a href=\"" TELARADB "appearances/%d\">telaradb.com</a>\n", tpath_obj("#7629/%d:/.1/.0", key)->m.data.si);
+
+    if (mcat)
+      printf(" <a href=\"" MAGELO "%s/%d\">magelo.com</a>\n", mcat, key);
+
     printf("<table>\n");
     printf("<tr><th colspan=9>Index</th><th>Name</th><th>Type</th><th>Value</th></tr>\n");
 

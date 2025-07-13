@@ -51,32 +51,81 @@ static void add_to_set(member m)
 }
 
 static void tpath(obj *o, char *path);
+static void tpath_match(obj *o, char *path);
 
 static void tpath_matched(member m, char *path)
 { int t = m.type;
   if (t != T_NONE)
   { if (*path)
-    { if (t!=T_COMP && t!=T_ARRAY && t!=T_MAP)
+    { if (t!=T_CLASS && t!=T_ARRAY && t!=T_MAP)
         tpath_err(102, "expected aggregate type, read code %d instead", m.code);
       if (*path == '[')
-      { path++;
-	if (*path == '.')
-	{ int index = atoi(++path);
-          while (isdigit(*path)) path++;
-	  if (*path != '=')
-	    tpath_err(103, "expected '=', read '%c' instead", *path?*path:'0');
-	  int val =  atoi(++path);
-	  while (isdigit(*path)) path++;
-	  if (*path != ']')
-	    tpath_err(104, "expected closing ']', read '%c' instead", *path?*path:'0');
-	  path++;
-	  obj *o = m.data.o;
-	  if (index<o->nmemb && o->members[index].data.si==val)
-          { if (*path)
-	      tpath(o, path);
-	    else
-	      add_to_set(m);
+      { static tset *ret_set_bak=NULL;
+        path++;
+	int ret_size_bak = ret_size;
+	if (ret_set_bak)
+	  tpath_err(105, "nested conditions not supported");
+	ret_set_bak = ret_set;
+	ret_size = 1;
+	ret_set = calloc(1, sizeof(tset)+sizeof(obj));
+	int i;
+	char *cpath = NULL;
+	for (i=0; path[i]; i++)
+	  if (path[i] == '=')
+	  { cpath = strndup(path, i);
+	    break;
 	  }
+	path += i+1;
+	if (!cpath)
+	  tpath_err(106, "expected '=' in condtion");
+	tpath_match(m.data.o, cpath);
+	free(cpath);
+	if (ret_set->nmemb > 1)
+	  tpath_err(107, "expression path matched multiple things");
+	int mval;
+	char *mstring = NULL;
+        if (ret_set->nmemb == 1)
+	{ member m = ret_set->members[0].m;
+	  if (m.type == T_NUM)
+	    mval = m.data.si;
+	  else if (m.type == T_STRING)
+	    mstring = m.data.s;
+	  else
+	    tpath_err(108, "only integer and string comparison supported");
+	  mval = m.data.si;
+	}
+	int found = (ret_set->nmemb == 1);
+	ret_size = ret_size_bak;
+	ret_set = ret_set_bak;
+	ret_set_bak = NULL;
+
+	int matched = 0;
+	if (mstring)
+	{ char start = *path;
+	  if (start!='"' && start!='\'')
+	    tpath_err(109, "string literal starting with ' or \" expected, read '%c'", start);
+	  char *lit = ++path;
+	  while(*path && *path!=start)
+	    path++;
+	  if (!*path)
+	    tpath_err(110, "closing %c not found", start);
+	  path++;
+	  matched = !strncmp(mstring, lit, path-lit-1);
+	}
+	else
+	{ int val =  atoi(path);
+	  while (isdigit(*path)) path++;
+	  matched = (mval==val);
+	}
+	if (*path != ']')
+	tpath_err(104, "expected closing ']', read '%c' instead", *path?*path:'0');
+	path++;
+	obj *o = m.data.o;
+	if (found && matched)
+        { if (*path)
+	    tpath(o, path);
+	  else
+	    add_to_set(m);
 	}
       }
       else
@@ -108,13 +157,18 @@ static void tpath_match(obj *o, char *path)
   { int id = atoi(++path);
     while (isdigit(*path)) path++;
     for (int i=0; i<=o->nmemb; i++)
-      if (o->members[i].type==T_COMP && o->members[i].data.o->class_id==id)
+      if (o->members[i].type==T_CLASS && o->members[i].data.o->class_id==id)
 	tpath_matched(o->members[i], path);
   }
 }
 
 static void tpath_search(obj *o, char *path)
-{ tpath_err(5, "search not implemented");
+{ tpath_match(o, path);
+  for (int i=0; i<=o->nmemb; i++)
+  { int t = o->members[i].type;
+    if (t==T_CLASS || t==T_ARRAY || t==T_MAP)
+      tpath_search(o->members[i].data.o, path);
+  }
 }
 
 static void tpath_cb(int k)
@@ -131,6 +185,13 @@ static void tpath(obj *o, char *path)
     else
       tpath_match(o, path+1);
   }
+  else if (*path==0 || *path=='[')
+  { member m;
+    m.code = 9;
+    m.type = T_CLASS;
+    m.data.o = o;
+    tpath_matched(m, path);
+  }
   else
     tpath_search(o, path);
 }
@@ -140,8 +201,15 @@ static tset *tpath_wrapper(char *path)
   tpath_errno = 0;
   tpath_errmsg = NULL;
 
+  int pl = strlen(path);
   char *resource = strtok(path, ":");
+  if (strlen(resource) == pl)
+  { tpath_error(5, "missing seperator ':'");
+    return NULL;
+  }
   p = strtok(NULL, ":");
+  if (!p)
+    p="";
   obj *o = NULL;
   id = 0;
   switch (resource[0])
@@ -152,7 +220,7 @@ static tset *tpath_wrapper(char *path)
       { key = atoi(k);
         o = read_obj(id, key);
         if (!o)
-        { tpath_error(4, "id/key pair not found");
+        { tpath_error(4, "id/key pair not found in database");
 	  return NULL;
         }
       }

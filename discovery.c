@@ -14,16 +14,6 @@
 #include "dconf.h"
 #include "html.h"
 
-typedef unsigned char byte;
-
-typedef uint16_t uint16;
-typedef uint32_t uint32;
-typedef uint64_t uint64;
-
-typedef int16_t int16;
-typedef int32_t int32;
-typedef int64_t int64;
-
 static int keysize;
 
 static int cmp(const void *a, const void *b)
@@ -71,7 +61,7 @@ static void output(char *tag, char *val, int nesting)
 static void print(FILE *xml, char *class, int nesting)
 { char line[2048], tag[64], val[2048], val2[2048];
   while (1)
-  { fgets(line, 2048, xml);
+  { fgets(line, 2047, xml);
     val[0]=0;
     sscanf(line, " <%[^>]>%[^<]", tag, val);
     while (strlen(val)>1 && val[strlen(val)-1]=='\n')
@@ -131,8 +121,10 @@ int main(int argc, char **argv)
   html_header("Discoveries", "", "", "");
 
   static char *cats[] = { "Achievement", "ArtifactCollection", "Item", "ItemKey", "NPC", "Quest", "Recipe", NULL };
+  static char *mcats[] = { "achievement", "artifactset", "item", "item", "npc", "quest", "recipe", NULL };
   char *id=NULL;
-  char *cat;
+  char *cat=NULL;
+  char *mcat=NULL;
   char *arg=strtok(query, "&");
   do
   { if (!strncmp(arg, "cat=", 4))
@@ -140,7 +132,9 @@ int main(int argc, char **argv)
       int i;
       for (i=0; cats[i]; i++)
 	if (!strcmp(cat, cats[i]))
+	{ mcat = mcats[i];
 	  break;
+	}
       if (!cats[i])
       { printf("Unkown category\n");
 	return 0;
@@ -150,6 +144,10 @@ int main(int argc, char **argv)
       id=arg+3;
   } while (arg=strtok(NULL, "&"));
 
+  if (!cat)
+  { printf("Missing category parameter cat\n");
+    return 0;
+  }
   char *scat = cat;
   if (!strcmp(cat, "ItemKey"))
     scat="Item";
@@ -190,7 +188,6 @@ int main(int argc, char **argv)
  
   int index = (s-keys)*4/keysize;
   uint32 *str_off = keys + (1+keysize/4)*size;
-  //printf("name: %s\n", data + str_off[index]);
   uint32 *xml_off = keys + size*keysize/4;
   int off = xml_off[index];
   fclose(inf);
@@ -204,11 +201,24 @@ int main(int argc, char **argv)
     dbid=10701;
 
   if (dbid)
-    printf("<a href=\"telaradb.cgi?id=%d&key=%d\">telara.db</a>", dbid, atoi(id));
+    printf("<a href=\"telaradb.cgi?id=%d&key=%d\">telara.db</a>\n", dbid, atoi(id));
 
   snprintf(inname, 127, "%s%ss.xml", DISCOVERY_DIR, cat);
   FILE *xml = fopen(inname, "r");
   fseek(xml, off, SEEK_SET);
+
+  if (!strcmp(cat, "Item"))
+  { char line[128];
+    fgets(line, 127, xml);
+    id = malloc(64);
+    sscanf(line, " <ItemKey>%[^<]", id);
+    fseek(xml, off, SEEK_SET);
+  }
+
+  if (!strcmp(cat, "Item") || !strcmp(cat, "ItemKey"))
+    printf(" <a href=\"" TELARADB "items/%s\">telaradb.com</a>\n", id);
+
+  printf(" <a href=\"" MAGELO "%s/%s\">magelo.com</a>\n", mcat, id);
  
   printf("<table>\n");
   printf("<tr><th colspan=4>Nesting</th><th>Name</th><th>Value</th></tr>\n");

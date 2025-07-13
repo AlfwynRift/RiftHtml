@@ -7,7 +7,7 @@ typedef struct member
   { T_NONE,
     T_NUM,
     T_STRING,
-    T_COMP,
+    T_CLASS,
     T_ARRAY,
     T_MAP,
   } type;

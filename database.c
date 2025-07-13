@@ -173,7 +173,7 @@ static byte *decode(byte *d, obj *o, entry e)
       o2->nmemb = 256;
       o2->class_id = leb128(&d);
       if (o)
-      { o->members[e.data].type = T_COMP;
+      { o->members[e.data].type = T_CLASS;
         o->members[e.data].data.o = o2;
       }
       else
@@ -320,8 +320,15 @@ char *getname(int id, int key)
   }
   if (o->members[i].type == T_STRING)
     return o->members[i].data.s;
-  else if (o->members[i].type == T_COMP && o->members[i].data.o->class_id == 7703)
-    return lstring(o->members[i].data.o);
+  else if (o->members[i].type == T_CLASS && o->members[i].data.o->class_id == 7703)
+  { char *ret = lstring(o->members[i].data.o);
+    if (strcmp(" ", ret))
+      return lstring(o->members[i].data.o);
+    else
+      return "";
+  }
+  else if (o->members[i].type == T_NUM)
+    return nlstring(o->members[i].data.si);
   else
     return "";
 }

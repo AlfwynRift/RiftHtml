@@ -15,6 +15,7 @@
 <body>
 
 <div id="nav">
+Telara.db:<br><br>
 <form action="telaradb.cgi">
   id <input type="text" name="id" value="%s">
   key <input type="text" name="key" value="%s">
@@ -26,9 +27,26 @@
   class <input type="text" name="class">
   <input type="submit" value="Go">
 </form>
+&nbsp;<br><br><hr>
+Discovery Files:<br><br>
+<form action="discovery.cgi">
+  Category <select name="cat">
+    <option value="Achievement">Achievement</option>
+    <option value="ArtifactCollection">Artifact Set</option>
+    <option value="Item">Item/TemplateId</option>
+    <option value="ItemKey">ItemKey</option>
+    <option value="NPC">NPC</option>
+    <option value="Quest">Quest</option>
+    <option value="Recipe">Recipe</option>
+  </select><br>
+  id <input type="text" name="id" style="width:120px;">
+  <input type="submit" value="Go">
+</form>
 
+&nbsp;<br><br><br><br><hr>
+Tpath:<br><br>
 <form action="telaradb.cgi">
-  tpath <input type="text" name="tpath" style="width:180px;" value="%s">
+  <input type="text" name="tpath" style="width:170px;" value="%s">
   <input type="submit" value="Go">
 </form>
 
