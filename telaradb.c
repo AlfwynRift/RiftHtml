@@ -156,8 +156,12 @@ static void print(obj *o, int index, int indent, int pindex)
           int talent = m->data.si;
 
 	  tps_member *tm = tpath_obj("#1827:/.0/{%d}/.0/@1830[.1=%d]/.2", classid, talent);
-	  char *tname = lstring(tm->m.data.o);
-	  sprintf(val, "<a href=\"telaradb.cgi?id=1827&key=%d#t%d_%d\">%s</a>", tm->key, classid, talent, tname);
+	  if (tm)
+	  { char *tname = lstring(tm->m.data.o);
+	    sprintf(val, "<a href=\"telaradb.cgi?id=1827&key=%d#t%d_%d\">%s</a>", tm->key, classid, talent, tname);
+	  }
+	  else
+	    sprintf(val, "<span style=\"color:#FF0000;\">%d</span>", talent);
 	}
         else if (c && c->type && !strcmp(c->type, "talent2"))
         { m->code = 19;
@@ -165,8 +169,12 @@ static void print(obj *o, int index, int indent, int pindex)
           int classid = o->members[index+1].data.si;
 
           tps_member *tm = tpath_obj("#1827:/.0/{%d}/.0/@1830[.1=%d]/.2", classid, talent);
-          char *tname = lstring(tm->m.data.o);
-          sprintf(val, "<a href=\"telaradb.cgi?id=1827&key=%d#t%d_%d\">%s</a>", tm->key, classid, talent, tname);
+	  if (tm)
+          { char *tname = lstring(tm->m.data.o);
+            sprintf(val, "<a href=\"telaradb.cgi?id=1827&key=%d#t%d_%d\">%s</a>", tm->key, classid, talent, tname);
+	  }
+          else
+            sprintf(val, "<span style=\"color:#FF0000;\">%d</span>", talent);
         }
         else
         { if (m->code < 2)	// boolean

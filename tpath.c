@@ -5,6 +5,11 @@
 #include <string.h>
 #include <ctype.h>
 #include <setjmp.h>
+#include <unistd.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include "common.h"
 #include "database.h"
 #include "tpath.h"
@@ -16,9 +21,14 @@ static tset *ret_set;
 int tpath_errno;
 char *tpath_errmsg;
 
-static void tpath_error(int n, char *msg)
-{ tpath_errno = n;
-  tpath_errmsg = msg;
+static void tpath_error(int n, char *msg, ...)
+{ va_list args;
+  va_start(args, msg);
+  vsnprintf(buf, 1023, msg, args);
+  va_end(args);
+
+  tpath_errno = n;
+  tpath_errmsg = buf;
 }
 
 static void tpath_err(int n, char *msg, ...)
@@ -27,7 +37,8 @@ static void tpath_err(int n, char *msg, ...)
   vsnprintf(buf, 1023, msg, args);
   va_end(args);
 
-  tpath_error(n, buf);
+  tpath_errno = n;
+  tpath_errmsg = buf;
   longjmp(env, 1);
 }
 
@@ -36,8 +47,8 @@ static int key;
 static char *p;
 
 static void add_to_set(member m)
-{ if (m.type == T_NONE)
-    return;
+{ //if (m.type == T_NONE)
+  //  return;
 
   if (ret_set->nmemb == ret_size)
   { ret_size *= 2;
@@ -55,7 +66,7 @@ static void tpath_match(obj *o, char *path);
 
 static void tpath_matched(member m, char *path)
 { int t = m.type;
-  if (t != T_NONE)
+  if (1 || t != T_NONE)
   { if (*path)
     { if (t!=T_CLASS && t!=T_ARRAY && t!=T_MAP)
         tpath_err(102, "expected aggregate type, read code %d instead", m.code);
@@ -86,13 +97,12 @@ static void tpath_matched(member m, char *path)
 	char *mstring = NULL;
         if (ret_set->nmemb == 1)
 	{ member m = ret_set->members[0].m;
-	  if (m.type == T_NUM)
+	  if (m.type==T_NUM || m.type==T_NONE)	// FIXME: default 0 assumed
 	    mval = m.data.si;
 	  else if (m.type == T_STRING)
 	    mstring = m.data.s;
 	  else
 	    tpath_err(108, "only integer and string comparison supported");
-	  mval = m.data.si;
 	}
 	int found = (ret_set->nmemb == 1);
 	ret_size = ret_size_bak;
@@ -228,11 +238,29 @@ static tset *tpath_wrapper(char *path)
     }
 
     case '@':
-    case '/':
-      tpath_error(3, "Resource method unimplemented");
+      tpath_error(3, "Resource method not iplemented");
       return NULL;
 
-    default:
+    case '/':
+      { char filename[128];
+        snprintf(filename, 127, "%s%s/%s", DATA_DIR,  release, resource+1);
+        int infile = open(filename, O_RDONLY);
+	if (infile == -1)
+    	{ tpath_error(5, "Failed to open %s\n", filename);
+      	  return NULL;
+    	}
+	FILE *inf = fdopen(infile, "r");
+	fseek(inf, 0, SEEK_END);
+	int insize = ftell(inf);
+	byte *data =  mmap(NULL, insize, PROT_READ, MAP_PRIVATE, infile, 0); 
+	fclose(inf);
+	close(infile);
+
+	o = decode_obj(data, insize);
+      }
+      break;
+
+   default:
       tpath_error(2, "Undefined resource method");
       return NULL;
   }
