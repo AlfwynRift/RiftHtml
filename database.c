@@ -114,7 +114,7 @@ static void open_db(void)
 
   if (sqlite3_open(filename, &db))
   { printf("SQL error: %s\n", sqlite3_errmsg(db));
-    printf("%s", filename);
+    printf("%s\n", filename);
     exit(0);
   }
 }

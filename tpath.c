@@ -110,9 +110,9 @@ static void tpath_matched(member m, char *path)
 	ret_set_bak = NULL;
 
 	int matched = 0;
-	if (mstring)
-	{ char start = *path;
-	  if (start!='"' && start!='\'')
+	char start = *path;
+	if (mstring || start=='"' || start=='\'')
+	{ if (start!='"' && start!='\'')
 	    tpath_err(109, "string literal starting with ' or \" expected, read '%c'", start);
 	  char *lit = ++path;
 	  while(*path && *path!=start)
@@ -120,7 +120,7 @@ static void tpath_matched(member m, char *path)
 	  if (!*path)
 	    tpath_err(110, "closing %c not found", start);
 	  path++;
-	  matched = !strncmp(mstring, lit, path-lit-1);
+	  matched = (mstring && strlen(mstring)==path-lit-1 && !strncmp(mstring, lit, path-lit-1));
 	}
 	else
 	{ int val =  atoi(path);
@@ -128,7 +128,7 @@ static void tpath_matched(member m, char *path)
 	  matched = (mval==val);
 	}
 	if (*path != ']')
-	tpath_err(104, "expected closing ']', read '%c' instead", *path?*path:'0');
+	  tpath_err(104, "expected closing ']', read '%c' instead", *path?*path:'0');
 	path++;
 	obj *o = m.data.o;
 	if (found && matched)

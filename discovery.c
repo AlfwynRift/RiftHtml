@@ -13,6 +13,7 @@
 #include "discname.h"
 #include "dconf.h"
 #include "html.h"
+#include "tpath.h"
 
 static int keysize;
 
@@ -86,13 +87,33 @@ static void print(FILE *xml, char *class, int nesting)
     } else
     { dconf *c=getdconf(class, tag);
       if (c && c->cat)
-      { int id =  atoi(val);
-        char *name=discname(c->cat, id, 0);
-        if (name)
-          sprintf(val, "<a href=\"discovery.cgi?cat=%s&id=%d\">%s</a>", c->cat, id, name);
-        else
-          sprintf(val, "<span style=\"color:#FF0000;\">%d</span>", id);
-      } else if (c && c->link)
+      { int id = 0;
+	if (!strcmp(c->cat, "icon"))
+	{ int ind=0;
+	  char *name = strdup(val);
+	  for (int i=0; i<strlen(name); i++)
+            if (name[i]=='\\')
+              ind=i+1;
+          int len=strlen(name+ind);
+          tps_member *tm = tpath_obj("#6009:[.0='%s']/.1", name+ind);
+          if (tm)
+          { sprintf(val, "<img src=\"" TELARADB "images/%s.png\" style=\"vertical-align: middle;\"> <a href=\"telaradb.cgi?id=6009&key=%d\" style=\"vertical-align: middle;\">%s</a>", tm->m.data.s, tm->key, name);
+          }
+	  free(name);
+	}
+	else
+	{ if (val)
+	    id = atoi(val);
+          char *name=NULL;
+	  if (id)
+	    name = discname(c->cat, id, 0);
+          if (name && id)
+	    sprintf(val, "<a href=\"discovery.cgi?cat=%s&id=%d\">%s</a>", c->cat, id, name);
+          else
+            sprintf(val, "<span style=\"color:#FF0000;\">%d</span>", id);
+	}
+      }
+      else if (c && c->link)
       { char *name=getname(c->link, atoi(val));
         char *val2 = strdup(val);
         if (name)
@@ -216,7 +237,7 @@ int main(int argc, char **argv)
   }
 
   if (!strcmp(cat, "Item") || !strcmp(cat, "ItemKey"))
-    printf(" <a href=\"" TELARADB "items/%s\">telaradb.com</a>\n", id);
+    printf(" <a href=\"" TELARADB "#/items/%s\">telaradb.com</a>\n", id);
 
   printf(" <a href=\"" MAGELO "%s/%s\">magelo.com</a>\n", mcat, id);
  

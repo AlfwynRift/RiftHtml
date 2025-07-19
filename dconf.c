@@ -50,6 +50,8 @@ static void initconf(void)
           c->config.cat = strdup(cat);
         else if (!strcmp("link", o))
           c->config.link = atoi(cat);
+	else
+	  c->config.cat = strdup(o);
       }
       nr++;
     }

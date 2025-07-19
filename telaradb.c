@@ -12,7 +12,7 @@
 #include "html.h"
 #include "tpath.h"
 
-static char *codenames[] = { "false", "true", "ulong", "slong", "4bytes", "8bytes", "string", "classend", "?", "class", "array", "map", "?", "?", "?", "?", "lstring", "istring", "listring", "link", "float", "int", "item", "quest", "NPC", "recipe", "wintime" , "color", "double", "nlstring" };
+static char *codenames[] = { "false", "true", "ulong", "slong", "4bytes", "8bytes", "string", "classend", "?", "class", "array", "map", "?", "?", "?", "?", "lstring", "istring", "listring", "link", "float", "int", "item", "quest", "NPC", "recipe", "wintime" , "color", "double", "nlstring", "key", "icon" };
 
 static void output(obj *o, int index, int indent, char *val, int pindex)
 { static int subclass;
@@ -51,8 +51,8 @@ static void output(obj *o, int index, int indent, char *val, int pindex)
 }
 
 static char *linkid(int id, int key)
-{ static char val[128];
-  sprintf(val, "\"telaradb.cgi?id=%d&key=%d\"", id, key);
+{ static char val[64];
+  snprintf(val, 63, "\"telaradb.cgi?id=%d&key=%d\"", id, key);
   return val;
 }
 
@@ -101,9 +101,7 @@ static void print(obj *o, int index, int indent, int pindex)
 	  k = getkey(c->type, c->linkt, m->data.si);
         char *name=getname(k.id, k.key);
         if (!name)
-        {
           sprintf(val, "<a href=%s style=\"color:#FF0000;\">%d</a>", linkid(k.id, k.key), k.key);
-        }
 	else
         { if (!strlen(name))
 	  { name = calloc(32, 1);
@@ -113,7 +111,15 @@ static void print(obj *o, int index, int indent, int pindex)
         }
       }
       else
-      { if (c && c->type && !strcmp(c->type, "float"))
+      { if (c && c->type && !strcmp(c->type, "icon" ))
+	{ m->code = 31;
+	  char *name=getname(6009, m->data.si);	
+	  if (!name)
+	    sprintf(val, "<a href=%s style=\"color:#FF0000;\">%d</a>", linkid(6009, m->data.si), m->data.si);
+	  else
+	    sprintf(val, "<img src=\"" TELARADB "images/%s.png\" style=\"vertical-align: middle;\"> <a href=%s style=\"vertical-align: middle;\">%s</a>", name, linkid(6009, m->data.si), name);
+	}
+	else if (c && c->type && !strcmp(c->type, "float"))
         { m->code = 20;
 	  sprintf(val, "%g", m->data.f);
 	}
@@ -129,6 +135,41 @@ static void print(obj *o, int index, int indent, int pindex)
 	{ m->code = 29;
 	  sprintf(val, "%s", nlstring(m->data.si));
 	}
+	else if (c && c->type && !strcmp(c->type, "key"))
+	{ m->code = 30;
+	  byte k = m->data.si;
+	  if (isupper(k) || isdigit(k))
+	    sprintf(val, "%d: %c", k, k);
+	  else
+	  { char *key = NULL;
+	    switch(k)
+	    { case '\t': key="Tab"; break;
+	      case ' ': key="Space"; break;
+	      case '&': key="Up arrow"; break;
+	      case '(': key="Down arrow"; break;
+	      case '%': key="Left arrow"; break;
+	      case '\'': key="Right arrow"; break;
+	      case 'o': key="Numpad /"; break;
+	      case 112: key="F1"; break;
+	      case 113: key="F2"; break;
+	      case 114: key="F3"; break;
+	      case 115: key="F4"; break;
+	      case 116: key="F5"; break;
+	      case 117: key="F6"; break;
+	      case 118: key="F7"; break;
+	      case 144: key="Numlock"; break;
+	      case 160: key="Shift"; break;
+	      case 162: key="Ctrl"; break;
+	      case 164: key="Alt"; break;
+	      case 187: key="+"; break;
+	      case 189: key="-"; break;
+	    }
+	    if (key)
+	      sprintf(val, "%d: %s", k, key);
+	    else
+	      sprintf(val, "%d", k);
+	  }
+        }
 	else if (c && c->type && !strcmp(c->type, "item"))
 	{ m->code = 22;
           disclink("Item", val, m);
@@ -192,14 +233,30 @@ static void print(obj *o, int index, int indent, int pindex)
 
     case T_STRING: 
 	if (c && c->type && !strcmp(c->type, "idstring"))
-        { char val[1024], link[128];
+        { char val[256], link[128];
           char *part=strtok(m->data.s, "#");
 	  strcpy(val, part);
 	  while (part=strtok(NULL, "#"))
-	  { sprintf(link, "#<A href=%s>%s</A>", linkid(c->link, atoi(part)), part);
+	  { snprintf(link, 255, "#<A href=%s>%s</A>", linkid(c->link, atoi(part)), part);
 	    strcat(val, link);
 	  }
 	  output(o, index, indent, val, pindex);
+	}
+	if (c && c->type && !strcmp(c->type, "icon"))
+	{ int ind=0;
+	  char *name=m->data.s;
+	  for (int i=0; i<strlen(name); i++)
+	    if (name[i]=='\\')
+	      ind=i+1; 
+	  int len=strlen(name+ind);
+	  tps_member *tm = tpath_obj("#6009:[.0='%.*s']/.1", len-4, name+ind);
+	  if (tm)
+	  { char val[256];
+	    snprintf(val, 255, "<img src=\"" TELARADB "images/%s.png\" style=\"vertical-align: middle;\"> <a style=\"vertical-align: middle;\">%s</a>", tm->m.data.s, m->data.s);
+	    output(o, index, indent, val, pindex);
+	  }
+	  else
+            output(o, index, indent, m->data.s, pindex);
 	}
 	else
 	  output(o, index, indent, m->data.s, pindex);
@@ -462,7 +519,9 @@ int main(int argc, char **argv)
     }
 
     if (id == 7629)
-      printf(" <a href=\"" TELARADB "appearances/%d\">telaradb.com</a>\n", tpath_obj("#7629/%d:/.1/.0", key)->m.data.si);
+      printf(" <a href=\"" TELARADB "#/appearances/%d\">telaradb.com</a>\n", tpath_obj("#7629/%d:/.1/.0", key)->m.data.si);
+    else if (id == 6009)
+      printf(" <a href=\"" TELARADB "images/%s.png\">telaradb.com</a>\n", tpath_obj("#6009/%d:/.1", key)->m.data.s);
 
     if (mcat)
       printf(" <a href=\"" MAGELO "%s/%d\">magelo.com</a>\n", mcat, key);
